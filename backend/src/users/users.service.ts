@@ -1,7 +1,8 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema.js';
 import { Model } from 'mongoose';
+import { UpdateProfileDto } from './dto/updateprofile.dto.js';
 
 @Injectable()
 export class UsersService {
@@ -32,4 +33,19 @@ export class UsersService {
         return this.userModel.findById(id).exec();
     }
 
+    async updateProfile(userId: string, data: UpdateProfileDto,): Promise<UserDocument> {
+        const user = await this.userModel
+            .findByIdAndUpdate(
+                userId,
+                { $set: data },
+                {
+                    new: true,
+                    runValidators: true,
+                },).exec();
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+        return user;
+    }
 }
