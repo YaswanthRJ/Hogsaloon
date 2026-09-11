@@ -2,7 +2,7 @@ import { get, post } from '../api/api';
 import type { User } from '../store/authStore';
 
 export function getProfile(): Promise<User> {
-  return get<User>('/auth/profile');
+  return get<User>('/auth/me');
 }
 
 export function login(identifier: string, password: string): Promise<{ user: User }> {
