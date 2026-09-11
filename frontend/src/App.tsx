@@ -5,6 +5,7 @@ import { AuthGate } from './components/AuthGate';
 import { useAuthStore } from './store/authStore';
 import { LoginPage } from './pages/LoginPage';
 import { MainPage } from './pages/MainPage';
+import { RegisterPage } from './pages/Registerpage';
 
 function AppRoutes() {
   const isLoading = useAuthStore((s) => s.isLoading);
@@ -23,6 +24,7 @@ function AppRoutes() {
     <Routes>
       {/* Public route — no Layout chrome */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
 
       {/* Protected routes — wrapped in Layout */}
       <Route element={<Layout />}>

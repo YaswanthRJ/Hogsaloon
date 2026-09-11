@@ -5,8 +5,8 @@ export function getProfile(): Promise<User> {
   return get<User>('/auth/me');
 }
 
-export function login(identifier: string, password: string): Promise<{ user: User }> {
-  return post<{ user: User }>('/auth/login', { identifier, password });
+export function login(email: string, password: string): Promise<{ user: User }> {
+  return post<{ user: User }>('/auth/login', { email, password });
 }
 
 export function register(
