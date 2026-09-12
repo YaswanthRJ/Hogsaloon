@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { register } from "../services/auth.service";
+import { Link } from "react-router-dom";
 
 export function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -34,9 +35,6 @@ export function RegisterPage() {
       >
         <div>
           <h1 className="text-2xl font-bold">Create account</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Enter your details to create an account.
-          </p>
         </div>
 
         <div className="space-y-2">
@@ -98,6 +96,16 @@ export function RegisterPage() {
         >
           {loading ? 'Creating account...' : 'Create account'}
         </button>
+
+        <p className="text-center text-sm text-gray-500">
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="font-medium text-black hover:underline"
+          >
+            Login
+          </Link>
+        </p>
       </form>
     </div>
   );

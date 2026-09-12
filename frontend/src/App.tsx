@@ -22,12 +22,10 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Public route — no Layout chrome */}
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-
       {/* Protected routes — wrapped in Layout */}
       <Route element={<Layout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={<MainPage />} />
         {/* add more protected routes here */}
       </Route>
