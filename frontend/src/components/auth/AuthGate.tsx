@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProfile } from '../services/auth.service';
-import { ApiError } from '../api/api';
-import { useAuthStore } from '../store/authStore';
+import { getProfile } from '../../services/auth.service';
+import { ApiError } from '../../api/api';
+import { useAuthStore } from '../../store/authStore';
 
 interface Props {
   children: React.ReactNode;
