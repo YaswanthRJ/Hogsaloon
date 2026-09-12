@@ -15,7 +15,7 @@ import type { Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService) { }
 
     private setAccessTokenCookie(res: Response, accessToken: string) {
         res.cookie('access_token', accessToken, {
@@ -56,7 +56,16 @@ export class AuthController {
 
     @UseGuards(JwtAuthGuard)
     @Get('me')
-    me(@Request() req: any) {
-        return req.user;
+    async me(@Request() req: any) {
+        const userProfile = await this.authService.getMe(req.user.userId);
+        const profileCompleted = userProfile?.username != null;
+        return {
+            email: userProfile?.email,
+            username: userProfile?.username,
+            imageUrl: userProfile?.imageUrl,
+            languages: userProfile?.languages,
+            interests: userProfile?.interests,
+            profileCompleted
+        };
     }
 }

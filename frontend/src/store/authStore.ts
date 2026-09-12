@@ -3,12 +3,11 @@ import { create } from "zustand";
 export interface User {
     _id: string;
     email: string;
-    userName: string;
+    username: string;
     imageurl: string | null;
     interests: string[];
     languages: string[];
-    createdAt: string;
-    updatedAt: string;
+    profileCompleted: boolean;
 }
 
 interface AuthState{

@@ -11,10 +11,9 @@ export function login(email: string, password: string): Promise<{ user: User }> 
 
 export function register(
   email: string,
-  username: string,
   password: string,
 ): Promise<{ user: User }> {
-  return post<{ user: User }>('/auth/register', { email, username, password });
+  return post<{ user: User }>('/auth/register', { email, password });
 }
 
 export function logout(): Promise<void> {

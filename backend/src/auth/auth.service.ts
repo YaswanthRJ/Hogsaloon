@@ -17,14 +17,12 @@ export class AuthService {
         const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
         const user = await this.userService.create({
             email: dto.email,
-            username: dto.username,
             hashedPassword,
         })
         return this.buildToken(user)
     }
 
     async login(dto: LoginDto) {
-
         const user = await this.userService.findByEmail(dto.email.toLocaleLowerCase())
 
         if (!user) throw new UnauthorizedException('Invalid credentials');
@@ -35,14 +33,17 @@ export class AuthService {
         return this.buildToken(user);
     }
 
+    async getMe(userId:string){
+        const user = await this.userService.findById(userId);
+        return user;
+    }
+
     private buildToken(user: any) {
-        const payload = { sub: user._id.toString(), username: user.username };
+        const payload = { sub: user._id.toString(), email: user.email };
         return {
             access_token: this.jwtService.sign(payload),
             user: {
                 id: user._id,
-                email: user.email,
-                username: user.username,
             },
         };
     }

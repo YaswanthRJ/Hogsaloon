@@ -1,1 +1,44 @@
 @import "tailwindcss";
+
+@theme {
+  /* Backgrounds */
+  --color-hog-bg: #18120f;
+  --color-hog-surface: #211a16;
+  --color-hog-surface-alt: #2b211b;
+
+  /* Brand */
+  --color-hog-primary: #e6a15c;
+  --color-hog-primary-hover: #f2b473;
+
+  /* Secondary */
+  --color-hog-secondary: #9f6848;
+  --color-hog-secondary-hover: #b97b58;
+
+  /* Whimsy */
+  --color-hog-pig: #e99a9a;
+
+  /* Text */
+  --color-hog-text: #f5efe6;
+  --color-hog-text-muted: #a89f91;
+
+  /* UI */
+  --color-hog-border: #332d28;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--color-hog-bg);
+  color: var(--color-hog-text);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}

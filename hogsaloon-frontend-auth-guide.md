@@ -91,8 +91,6 @@ export interface User {
   imageUrl: string | null;
   interests: string[];
   languages: string[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 interface AuthState {

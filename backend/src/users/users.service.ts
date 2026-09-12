@@ -10,13 +10,13 @@ export class UsersService {
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     ) { }
 
-    async create(data: { email: string; username: string; hashedPassword: string; }): Promise<UserDocument> {
+    async create(data: { email: string; hashedPassword: string; }): Promise<UserDocument> {
         try {
             return await this.userModel.create(data);
         } catch (err: any) {
             if (err.code === 11000) {
-                // Duplicate key — email or username already taken
-                throw new ConflictException('Email or username already in use');
+                // Duplicate key — email already taken
+                throw new ConflictException('Email  already in use');
             }
             throw err;
         }
