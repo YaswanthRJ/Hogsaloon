@@ -6,6 +6,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module.js';
 import { AuthModule } from './auth/auth.module.js';
+import { SocketModule } from './socket/socket.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -27,7 +28,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       inject:[ConfigService],
     }),
     UsersModule,
-    AuthModule
+    AuthModule,
+    SocketModule
   ],
   controllers: [AppController],
   providers: [AppService],

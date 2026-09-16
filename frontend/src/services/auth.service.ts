@@ -1,5 +1,6 @@
 import { get, post } from '../api/api';
 import type { User } from '../store/authStore';
+import { connectSocket } from './socket.service';
 
 export function getProfile(): Promise<User> {
   return get<User>('/auth/me');
@@ -18,4 +19,8 @@ export function register(
 
 export function logout(): Promise<void> {
   return post<void>('/auth/logout', {});
+}
+
+export function authComplete(){
+  connectSocket();
 }

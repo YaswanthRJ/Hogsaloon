@@ -1,11 +1,13 @@
 import { useState } from "react";
 import type { Authdata } from "../../components/auth/auth.types";
 import { AuthForm } from "../../components/auth/AuthForm";
-import { register } from "../../services/auth.service";
+import { authComplete, register } from "../../services/auth.service";
+import { useNavigate } from "react-router-dom";
 
 export function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     async function handleRegister(data: Authdata) {
         setLoading(true);
@@ -13,6 +15,8 @@ export function RegisterPage() {
 
         try {
             await register(data.email, data.password);
+            navigate('/');
+            authComplete();
         } catch (err) {
             setError("Invalid email or password.");
             console.error();
