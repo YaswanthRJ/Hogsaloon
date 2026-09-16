@@ -15,11 +15,18 @@ export class AuthService {
     ) { }
     async register(dto: RegisterDto) {
         const hashedPassword = await bcrypt.hash(dto.password, SALT_ROUNDS);
-        const user = await this.userService.create({
+        try{
+            const user = await this.userService.create({
             email: dto.email,
             hashedPassword,
-        })
+        }) 
         return this.buildToken(user)
+        }
+       catch(e){
+        console.error(e)
+        throw e;
+       }     
+        
     }
 
     async login(dto: LoginDto) {

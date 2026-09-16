@@ -15,6 +15,7 @@ export class User {
 
   @Prop({
     unique: true,
+    sparse: true,
     trim: true,
   })
   username: string;

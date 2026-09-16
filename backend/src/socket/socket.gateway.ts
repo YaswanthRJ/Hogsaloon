@@ -7,6 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
 import { SocketService } from './socket.service.js';
+import { MatchmakingService } from '../matchmaking/matchmaking.service.js';
 
 @WebSocketGateway(
   {
@@ -17,7 +18,9 @@ import { SocketService } from './socket.service.js';
   },
 )
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  constructor(private readonly socketService: SocketService) {}
+  constructor(private readonly socketService: SocketService,
+    private readonly matchMakingService: MatchmakingService
+  ) { }
 
   async handleConnection(socket: Socket) {
     try {
@@ -46,6 +49,6 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     console.log(`User ${userId} wants to find someone`);
 
-    // NEXT: matchmakingService.joinQueue(userId)
+    await this.matchMakingService.joinQueue(userId);
   }
 }

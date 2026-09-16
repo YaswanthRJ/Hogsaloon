@@ -7,6 +7,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { SocketModule } from './socket/socket.module.js';
+import { RedisModule } from './redis/redis.module.js';
+import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -29,7 +31,9 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     }),
     UsersModule,
     AuthModule,
-    SocketModule
+    SocketModule,
+    RedisModule,
+    MatchmakingModule
   ],
   controllers: [AppController],
   providers: [AppService],
