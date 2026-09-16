@@ -32,6 +32,15 @@ export function getSocket(): Socket | null {
   return socket;
 }
 
+export function joinQueue(): void {
+  if (!socket?.connected) {
+    console.error('Cannot join queue: socket is not connected');
+    return;
+  }
+  console.log("emitting join queue request")
+  socket.emit('queue:join');
+}
+
 export function disconnectSocket(): void {
   socket?.disconnect();
   socket = null;

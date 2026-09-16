@@ -1,3 +1,4 @@
+import { joinQueue } from '../services/socket.service';
 import { useAuthStore } from '../store/authStore';
 
 export function MainPage() {
@@ -8,6 +9,7 @@ export function MainPage() {
       <h1 className="text-2xl font-bold">
         Welcome, {user?.username} 🐷
       </h1>
+      <button onClick={joinQueue}>Join queue</button>
     </div>
   );
 }

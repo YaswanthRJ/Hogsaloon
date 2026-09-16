@@ -24,6 +24,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       socket.data.userId = await this.socketService.authenticate(
         socket.handshake.headers.cookie,
       );
+      console.log("connected to socket", socket.data.userId)
     } catch {
       socket.disconnect(true);
     }
