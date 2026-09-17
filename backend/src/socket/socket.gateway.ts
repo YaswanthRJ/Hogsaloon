@@ -8,6 +8,7 @@ import {
 import { Socket } from 'socket.io';
 import { SocketService } from './socket.service.js';
 import { MatchmakingService } from '../matchmaking/matchmaking.service.js';
+import { ChatsessionService } from '../chatsession/chatsession.service.js';
 
 @WebSocketGateway(
   {
@@ -19,7 +20,9 @@ import { MatchmakingService } from '../matchmaking/matchmaking.service.js';
 )
 export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(private readonly socketService: SocketService,
-    private readonly matchMakingService: MatchmakingService
+    private readonly matchMakingService: MatchmakingService,
+    private readonly chatSessionService: ChatsessionService,
+
   ) { }
 
   async handleConnection(socket: Socket) {
@@ -43,12 +46,47 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     console.log(`User ${userId} disconnected`);
   }
 
-  @SubscribeMessage('queue:join')
-  async handleQueueJoin(@ConnectedSocket() socket: Socket) {
+   @SubscribeMessage('queue:join')
+  async handleQueueJoin(
+    @ConnectedSocket() socket: Socket,
+  ) {
     const userId = socket.data.userId;
 
-    console.log(`User ${userId} wants to find someone`);
+    if (!userId) {
+      return;
+    }
 
-    await this.matchMakingService.joinQueue(userId);
+    console.log(
+      `User ${userId} wants to find someone`,
+    );
+
+    const result =
+      await this.matchMakingService.joinQueue(userId);
+
+    console.log('Matchmaking result:', result);
+
+    if (result.status === 'WAITING') {
+      return;
+    }
+
+    if (result.status === 'DUPLICATE') {
+      return;
+    }
+
+    if (result.status === 'MATCHED') {
+      const first = JSON.parse(result.first);
+      const second = JSON.parse(result.second);
+
+      const session =
+        await this.chatSessionService.create(
+          first.userId,
+          second.userId,
+        );
+
+      console.log(
+        'Match session created:',
+        session,
+      );
+    }
   }
 }

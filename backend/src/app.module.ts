@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { SocketModule } from './socket/socket.module.js';
 import { RedisModule } from './redis/redis.module.js';
 import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
+import { ChatsessionModule } from './chatsession/chatsession.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -33,7 +34,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     AuthModule,
     SocketModule,
     RedisModule,
-    MatchmakingModule
+    MatchmakingModule,
+    ChatsessionModule
   ],
   controllers: [AppController],
   providers: [AppService],
