@@ -16,10 +16,15 @@ const __dirname = dirname(__filename);
 @Injectable()
 export class MatchmakingService {
     private readonly joinScript: string;
+    private readonly removeFromQueueScript: string;
 
     constructor(private readonly redisService: RedisService) {
         this.joinScript = readFileSync(
             join(__dirname, 'scripts', 'join-queue.lua'),
+            'utf8',
+        );
+        this.removeFromQueueScript = readFileSync(
+            join(__dirname, 'scripts', 'remove-from-queue.lua'),
             'utf8',
         );
     }
@@ -70,5 +75,17 @@ export class MatchmakingService {
         console.log("no return")
 
         throw new Error(`Unknown matchmaking result: ${status}`);
+    }
+
+    async removeFromQueue(userId: string): Promise<void> {
+        const client = this.redisService.getClient();
+
+        await client.eval(
+            this.removeFromQueueScript,
+            2,
+            MATCHMAKING_QUEUE_KEY,
+            MATCHMAKING_WAITING_USERS_KEY,
+            userId,
+        );
     }
 }
