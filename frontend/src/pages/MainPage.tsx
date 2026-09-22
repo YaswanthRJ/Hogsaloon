@@ -12,4 +12,4 @@ export function MainPage() {
       <button onClick={joinQueue}>Join queue</button>
     </div>
   );
-}
+}    

@@ -17,6 +17,10 @@ export function connectSocket(): Socket {
     console.log('Socket connected:', socket?.id);
   });
 
+  socket.on('chat:started', (data) => {
+    console.log('CHAT STARTED:', data);
+  });
+
   socket.on('disconnect', (reason) => {
     console.log('Socket disconnected:', reason);
   });
