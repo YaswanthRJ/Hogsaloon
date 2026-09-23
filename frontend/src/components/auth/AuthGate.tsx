@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getProfile } from '../../services/auth.service';
-import { ApiError } from '../../api/api';
 import { useAuthStore } from '../../store/authStore';
 import { connectSocket } from '../../services/socket.service';
 
@@ -11,21 +9,18 @@ interface Props {
 
 export function AuthGate({ children }: Props) {
   const { setUser, setLoading } = useAuthStore();
-  const navigate = useNavigate();
 
   useEffect(() => {
     getProfile()
-      .then((user)=>{
-        setUser(user)
+      .then((user) => {
+        setUser(user);
         connectSocket();
       })
-      .catch((err) => {
-        if (err instanceof ApiError && err.status === 401) {
-          navigate('/login', { replace: true });
-        }
+      .catch(() => {
+        setUser(null);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [setLoading, setUser]);
 
   return <>{children}</>;
 }
