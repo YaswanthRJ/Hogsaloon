@@ -62,8 +62,13 @@ function put<T>(url: string, body: unknown): Promise<T> {
   return apiRequest<T>(url, { method: 'PUT', body: JSON.stringify(body) });
 }
 
+function patch<T>(url: string, body: unknown): Promise<T> {
+  return apiRequest<T>(url, { method: 'PATCH', body: JSON.stringify(body) });
+}
+
+
 function del<T>(url: string): Promise<T> {
   return apiRequest<T>(url, { method: 'DELETE' });
 }
 
-export { get, post, put, del };
+export { get, post, put, patch, del };

@@ -1,7 +1,8 @@
-import { get, post } from '../api/api';
+import { get, patch, post } from '../api/api';
 import type { User } from '../store/authStore';
 import { connectSocket } from './socket.service';
 import { useAuthStore } from '../store/authStore';
+import type { CompleteProfile } from '../components/profile/profile.types';
 
 export function getProfile(): Promise<User> {
   return get<User>('/auth/me');
@@ -29,4 +30,8 @@ export async function authComplete(): Promise<User> {
   connectSocket();
 
   return user;
+}
+
+export async function completeProfile(body: CompleteProfile){
+  return patch('/profile', { body });
 }
