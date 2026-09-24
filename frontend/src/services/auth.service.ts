@@ -33,5 +33,5 @@ export async function authComplete(): Promise<User> {
 }
 
 export async function completeProfile(body: CompleteProfile){
-  return patch('/profile', { body });
+  return patch('users/profile',body);
 }
