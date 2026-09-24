@@ -32,6 +32,26 @@ export async function authComplete(): Promise<User> {
   return user;
 }
 
-export async function completeProfile(body: CompleteProfile){
-  return patch('users/profile',body);
+export async function completeProfile(
+  body: CompleteProfile,
+) {
+  const formData = new FormData();
+
+  formData.append('username', body.username);
+
+  formData.append(
+    'interests',
+    JSON.stringify(body.interests),
+  );
+
+  formData.append(
+    'languages',
+    JSON.stringify(body.languages),
+  );
+
+  if (body.image) {
+    formData.append('image', body.image);
+  }
+
+  return patch('users/profile', formData);
 }

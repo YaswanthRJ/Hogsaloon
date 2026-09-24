@@ -18,17 +18,24 @@ export class ApiError extends Error {
   }
 }
 
-async function apiRequest<T>(url: string, options: RequestInit): Promise<T> {
+async function apiRequest<T>(
+  url: string,
+  options: RequestInit,
+): Promise<T> {
+  const isFormData = options.body instanceof FormData;
+
   const res = await fetch(buildUrl(url), {
     ...options,
     credentials: 'include',
+
     headers: {
-      ...jsonHeaders,
+      ...(isFormData ? {} : jsonHeaders),
       ...(options.headers || {}),
     },
   });
 
   let data: unknown;
+
   try {
     data = await res.json();
   } catch {
@@ -38,9 +45,9 @@ async function apiRequest<T>(url: string, options: RequestInit): Promise<T> {
   if (!res.ok) {
     const message =
       data &&
-      typeof data === 'object' &&
-      'message' in data &&
-      typeof (data as any).message === 'string'
+        typeof data === 'object' &&
+        'message' in data &&
+        typeof (data as any).message === 'string'
         ? (data as any).message
         : 'Request failed';
 
@@ -51,24 +58,54 @@ async function apiRequest<T>(url: string, options: RequestInit): Promise<T> {
 }
 
 function get<T>(url: string): Promise<T> {
-  return apiRequest<T>(url, { method: 'GET' });
+  return apiRequest<T>(url, {
+    method: 'GET',
+  });
 }
 
-function post<T>(url: string, body: unknown): Promise<T> {
-  return apiRequest<T>(url, { method: 'POST', body: JSON.stringify(body) });
+function post<T>(
+  url: string,
+  body: unknown,
+): Promise<T> {
+  return apiRequest<T>(url, {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
 }
 
-function put<T>(url: string, body: unknown): Promise<T> {
-  return apiRequest<T>(url, { method: 'PUT', body: JSON.stringify(body) });
+function put<T>(
+  url: string,
+  body: unknown,
+): Promise<T> {
+  return apiRequest<T>(url, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  });
 }
 
-function patch<T>(url: string, body: unknown): Promise<T> {
-  return apiRequest<T>(url, { method: 'PATCH', body: JSON.stringify(body) });
+function patch<T>(
+  url: string,
+  body: unknown,
+): Promise<T> {
+  return apiRequest<T>(url, {
+    method: 'PATCH',
+    body:
+      body instanceof FormData
+        ? body
+        : JSON.stringify(body),
+  });
 }
-
 
 function del<T>(url: string): Promise<T> {
-  return apiRequest<T>(url, { method: 'DELETE' });
+  return apiRequest<T>(url, {
+    method: 'DELETE',
+  });
 }
 
-export { get, post, put, patch, del };
+export {
+  get,
+  post,
+  put,
+  patch,
+  del,
+};

@@ -6,7 +6,7 @@ export interface CompleteProfileProps {
 
 export interface CompleteProfile{
     username: string;
-    imageUrl: string;
+    image: File | null;
     interests: string[];
     languages: string[];
 }

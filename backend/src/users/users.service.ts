@@ -3,11 +3,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from './schemas/user.schema.js';
 import { Model } from 'mongoose';
 import { UpdateProfileDto } from './dto/updateprofile.dto.js';
+import { ImageService } from '../image/image.service.js';
 
 @Injectable()
 export class UsersService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+        private readonly imageService: ImageService,
     ) { }
 
     async create(data: { email: string; hashedPassword: string; }): Promise<UserDocument> {
@@ -33,11 +35,25 @@ export class UsersService {
         return this.userModel.findById(id).exec();
     }
 
-    async updateProfile(userId: string, data: UpdateProfileDto,): Promise<UserDocument> {
+    async updateProfile(
+        userId: string,
+        data: UpdateProfileDto,
+        image?: Express.Multer.File,
+    ): Promise<UserDocument> {
+        const profileData: UpdateProfileDto = { ...data };
+
+        if (image) {
+            const uploadedImage = await this.imageService.uploadImageBytes(
+                image.buffer,
+                `users/${userId}/profile`,
+            );
+            profileData.imageUrl = uploadedImage.secureUrl;
+        }
+
         const user = await this.userModel
             .findByIdAndUpdate(
                 userId,
-                { $set: data },
+                { $set: profileData },
                 {
                     new: true,
                     runValidators: true,

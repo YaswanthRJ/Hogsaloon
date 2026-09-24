@@ -11,6 +11,7 @@ import { RedisModule } from './redis/redis.module.js';
 import { MatchmakingModule } from './matchmaking/matchmaking.module.js';
 import { ChatsessionModule } from './chatsession/chatsession.module.js';
 import { ChatModule } from './chat/chat.module.js';
+import { ImageModule } from './image/image.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -37,7 +38,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     RedisModule,
     MatchmakingModule,
     ChatsessionModule,
-    ChatModule
+    ChatModule,
+    ImageModule
   ],
   controllers: [AppController],
   providers: [AppService],

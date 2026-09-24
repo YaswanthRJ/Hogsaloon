@@ -9,7 +9,7 @@ import { CheckboxOption } from "./CheckBoxOptions";
 export function CompleteProfileForm(props: CompleteProfileProps) {
     const [profileData, setProfileData] = useState<CompleteProfile>({
         username: "",
-        imageUrl: "",
+        image: null,
         interests: [],
         languages: []
     });
@@ -77,27 +77,28 @@ export function CompleteProfileForm(props: CompleteProfileProps) {
                         />
                     </div>
 
-                    {/* Image URL */}
+                    {/* Image */}
                     <div className="flex flex-col gap-2">
                         <label
-                            htmlFor="imageUrl"
+                            htmlFor="image"
                             className="text-sm font-medium text-hog-text"
                         >
-                            Profile Image URL
+                            Profile Image
                         </label>
 
                         <input
-                            id="imageUrl"
-                            type="url"
-                            placeholder="https://example.com/avatar.jpg"
-                            value={profileData.imageUrl}
-                            onChange={(e) =>
-                                setProfileData({
-                                    ...profileData,
-                                    imageUrl: e.target.value
-                                })
-                            }
-                            className="w-full rounded-lg border border-hog-border bg-hog-surface-alt px-4 py-3 text-hog-text outline-none transition placeholder:text-hog-text-muted focus:border-hog-primary focus:ring-2 focus:ring-hog-primary/20"
+                            id="image"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                                const file = e.target.files?.[0] ?? null;
+
+                                setProfileData((current) => ({
+                                    ...current,
+                                    image: file
+                                }));
+                            }}
+                            className="w-full rounded-lg border border-hog-border bg-hog-surface-alt px-4 py-3 text-hog-text outline-none"
                             required
                         />
                     </div>
