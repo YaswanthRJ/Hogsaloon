@@ -9,36 +9,72 @@ if redis.call('SISMEMBER', waitingUsersKey, userId) == 1 then
   return { 'DUPLICATE' }
 end
 
--- Add user to FIFO queue
+-- Add user to the queue. FIFO order is used as the final tie-breaker.
 redis.call('RPUSH', queueKey, entry)
 
 -- Track that this user is waiting
 redis.call('SADD', waitingUsersKey, userId)
 
-local count = redis.call('LLEN', queueKey)
+local entries = redis.call('LRANGE', queueKey, 0, -1)
+local joiningEntry = cjson.decode(entry)
+local bestEntry = nil
+local bestLanguageOverlap = -1
+local bestInterestOverlap = -1
 
 -- Not enough users to make a match
-if count < 2 then
+if #entries < 2 then
   return { 'WAITING' }
 end
 
--- Take the first two users
-local first = redis.call('LPOP', queueKey)
-local second = redis.call('LPOP', queueKey)
+for _, candidate in ipairs(entries) do
+  local candidateEntry = cjson.decode(candidate)
 
-if not first or not second then
+  if candidateEntry.userId ~= userId then
+    local languageOverlap = 0
+    local interestOverlap = 0
+
+    for _, language in ipairs(joiningEntry.languages or {}) do
+      for _, candidateLanguage in ipairs(candidateEntry.languages or {}) do
+        if language == candidateLanguage then
+          languageOverlap = languageOverlap + 1
+          break
+        end
+      end
+    end
+
+    for _, interest in ipairs(joiningEntry.interests or {}) do
+      for _, candidateInterest in ipairs(candidateEntry.interests or {}) do
+        if interest == candidateInterest then
+          interestOverlap = interestOverlap + 1
+          break
+        end
+      end
+    end
+
+    if languageOverlap > bestLanguageOverlap or
+      (languageOverlap == bestLanguageOverlap and interestOverlap > bestInterestOverlap) then
+      bestEntry = candidate
+      bestLanguageOverlap = languageOverlap
+      bestInterestOverlap = interestOverlap
+    end
+  end
+end
+
+if not bestEntry then
   return { 'WAITING' }
 end
 
-local firstEntry = cjson.decode(first)
-local secondEntry = cjson.decode(second)
+redis.call('LREM', queueKey, 1, entry)
+redis.call('LREM', queueKey, 1, bestEntry)
+
+local bestEntryData = cjson.decode(bestEntry)
 
 -- They are no longer waiting
 redis.call(
   'SREM',
   waitingUsersKey,
-  firstEntry.userId,
-  secondEntry.userId
+  userId,
+  bestEntryData.userId
 )
 
-return { 'MATCHED', first, second }
+return { 'MATCHED', entry, bestEntry }

@@ -100,8 +100,13 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       `User ${userId} wants to find someone`,
     );
 
+    const profile = await this.usersService.getMatchProfile(userId);
+
     const result =
-      await this.matchMakingService.joinQueue(userId);
+      await this.matchMakingService.joinQueue(userId, {
+        interests: profile.interests,
+        languages: profile.languages,
+      });
 
     console.log('Matchmaking result:', result);
 

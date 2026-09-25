@@ -8,7 +8,10 @@ import {
     MATCHMAKING_QUEUE_KEY,
     MATCHMAKING_WAITING_USERS_KEY,
 } from './matchmaking.constants.js';
-import type { JoinQueueResult } from './matchmaking.types.js';
+import type {
+    JoinQueueResult,
+    MatchmakingPreferences,
+} from './matchmaking.types.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -29,13 +32,17 @@ export class MatchmakingService {
         );
     }
 
-    async joinQueue(userId: string): Promise<JoinQueueResult> {
-        console.log('join queue called')
+    async joinQueue(
+        userId: string,
+        preferences: MatchmakingPreferences,
+    ): Promise<JoinQueueResult> {
         const client = this.redisService.getClient();
 
         const entry = JSON.stringify({
             userId,
             joinedAt: Date.now(),
+            interests: preferences.interests,
+            languages: preferences.languages,
         });
 
         const result = (await client.eval(
@@ -47,11 +54,7 @@ export class MatchmakingService {
             entry,
         )) as string[];
 
-        console.log('Redis matchmaking result:', result);
-
         const status = result[0];
-
-        console.log('Matchmaking status:', status);
 
         if (status === 'DUPLICATE') {
             return {
@@ -72,8 +75,6 @@ export class MatchmakingService {
                 second: result[2],
             };
         }
-        console.log("no return")
-
         throw new Error(`Unknown matchmaking result: ${status}`);
     }
 
