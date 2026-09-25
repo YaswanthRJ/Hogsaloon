@@ -4,6 +4,7 @@ import { User, UserDocument } from './schemas/user.schema.js';
 import { Model } from 'mongoose';
 import { UpdateProfileDto } from './dto/updateprofile.dto.js';
 import { ImageService } from '../image/image.service.js';
+import { MatchProfile } from './users.types.js';
 
 @Injectable()
 export class UsersService {
@@ -33,6 +34,25 @@ export class UsersService {
 
     async findById(id: string): Promise<UserDocument | null> {
         return this.userModel.findById(id).exec();
+    }
+
+    async getMatchProfile(id: string): Promise<MatchProfile> {
+        const user = await this.userModel
+            .findById(id)
+            .select('username imageUrl interests languages')
+            .lean()
+            .exec();
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        return {
+            username: user.username,
+            imageUrl: user.imageUrl,
+            interests: user.interests,
+            languages: user.languages,
+        };
     }
 
     async updateProfile(

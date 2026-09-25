@@ -7,6 +7,7 @@ import { ImageService } from '../image/image.service.js';
 describe('UsersService', () => {
   let service: UsersService;
   const findByIdAndUpdate = vi.fn();
+  const findById = vi.fn();
   const uploadImageBytes = vi.fn();
 
   beforeEach(async () => {
@@ -15,7 +16,10 @@ describe('UsersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
-        { provide: getModelToken(User.name), useValue: { findByIdAndUpdate } },
+        {
+          provide: getModelToken(User.name),
+          useValue: { findById, findByIdAndUpdate },
+        },
         { provide: ImageService, useValue: { uploadImageBytes } },
       ],
     }).compile();
@@ -50,6 +54,32 @@ describe('UsersService', () => {
         },
       },
       { new: true, runValidators: true },
+    );
+  });
+
+  it('returns only public match profile fields', async () => {
+    const exec = vi.fn().mockResolvedValue({
+      username: 'Rando',
+      imageUrl: 'https://example.com/profile.jpg',
+      interests: ['Music'],
+      languages: ['English'],
+      email: 'private@example.com',
+      hashedPassword: 'private-password',
+    });
+    const lean = vi.fn().mockReturnValue({ exec });
+    const select = vi.fn().mockReturnValue({ lean });
+    findById.mockReturnValue({ select });
+
+    await expect(service.getMatchProfile('user-id')).resolves.toEqual({
+      username: 'Rando',
+      imageUrl: 'https://example.com/profile.jpg',
+      interests: ['Music'],
+      languages: ['English'],
+    });
+
+    expect(findById).toHaveBeenCalledWith('user-id');
+    expect(select).toHaveBeenCalledWith(
+      'username imageUrl interests languages',
     );
   });
 });

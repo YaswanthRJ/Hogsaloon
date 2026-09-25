@@ -60,6 +60,7 @@ export class AuthController {
         const userProfile = await this.authService.getMe(req.user.userId);
         const profileCompleted = userProfile?.username != null;
         return {
+            _id: userProfile?._id.toString(),
             email: userProfile?.email,
             username: userProfile?.username,
             imageUrl: userProfile?.imageUrl,

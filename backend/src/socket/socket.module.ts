@@ -6,9 +6,10 @@ import { MatchmakingModule } from '../matchmaking/matchmaking.module.js';
 import { ChatsessionModule } from '../chatsession/chatsession.module.js';
 import { SocketPresenceService } from './socket-presence.service.js';
 import { ChatModule } from '../chat/chat.module.js';
+import { UsersModule } from '../users/users.module.js';
 
 @Module({
-  imports: [AuthModule, MatchmakingModule, ChatsessionModule, ChatModule],
+  imports: [AuthModule, MatchmakingModule, ChatsessionModule, ChatModule, UsersModule],
   providers: [SocketGateway, SocketService, SocketPresenceService],
 })
 export class SocketModule {}

@@ -13,6 +13,7 @@ import { MatchmakingService } from '../matchmaking/matchmaking.service.js';
 import { ChatsessionService } from '../chatsession/chatsession.service.js';
 import { ChatService } from '../chat/chat.service.js';
 import { SocketPresenceService } from './socket-presence.service.js';
+import { UsersService } from '../users/users.service.js';
 
 @WebSocketGateway(
   {
@@ -28,6 +29,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatSessionService: ChatsessionService,
     private readonly chatService: ChatService,
     private readonly socketPresenceService: SocketPresenceService,
+    private readonly usersService: UsersService,
 
   ) { }
 
@@ -126,6 +128,11 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         session,
       );
 
+      const [firstProfile, secondProfile] = await Promise.all([
+        this.usersService.getMatchProfile(first.userId),
+        this.usersService.getMatchProfile(second.userId),
+      ]);
+
       const firstSockets =
         this.socketPresenceService.getSockets(
           first.userId,
@@ -143,6 +150,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
             sessionId: session.sessionId,
             expiresAt: session.expiresAt,
             otherUserId: second.userId,
+            matchProfile: secondProfile,
           },
         );
       }
@@ -154,6 +162,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
             sessionId: session.sessionId,
             expiresAt: session.expiresAt,
             otherUserId: first.userId,
+            matchProfile: firstProfile,
           },
         );
       }

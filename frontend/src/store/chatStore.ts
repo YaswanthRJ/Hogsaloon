@@ -12,10 +12,18 @@ export interface ChatMessage {
   createdAt: number;
 }
 
+export interface MatchProfile {
+  username: string;
+  imageUrl: string;
+  interests: string[];
+  languages: string[];
+}
+
 export interface ChatStartedData {
   sessionId: string;
   expiresAt: number;
   otherUserId: string;
+  matchProfile: MatchProfile;
 }
 
 interface ChatStore {
@@ -26,6 +34,7 @@ interface ChatStore {
   sessionId: string | null;
   expiresAt: number | null;
   otherUserId: string | null;
+  matchProfile: MatchProfile | null;
 
   // Current chat messages
   messages: ChatMessage[];
@@ -48,6 +57,7 @@ export const useChatStore = create<ChatStore>((set) => ({
   sessionId: null,
   expiresAt: null,
   otherUserId: null,
+  matchProfile: null,
 
   messages: [],
 
@@ -61,6 +71,7 @@ export const useChatStore = create<ChatStore>((set) => ({
       sessionId: data.sessionId,
       expiresAt: data.expiresAt,
       otherUserId: data.otherUserId,
+      matchProfile: data.matchProfile,
       messages: [],
     });
   },
@@ -71,6 +82,7 @@ export const useChatStore = create<ChatStore>((set) => ({
       sessionId: null,
       expiresAt: null,
       otherUserId: null,
+      matchProfile: null,
       messages: [],
     });
   },
