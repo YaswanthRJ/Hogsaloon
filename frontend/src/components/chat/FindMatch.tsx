@@ -10,16 +10,15 @@ export function FindMatch() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-12">
+    <div className="flex min-h-full items-center justify-center px-6 py-12">
       <section className="flex w-full max-w-xl flex-col items-center text-center">
         <p className="text-xl font-semibold tracking-tight text-hog-text">
           Meet someone new.
         </p>
 
         <p className="mt-5 max-w-md text-base leading-7 text-hog-text-muted">
-          Connect with someone at random based on your
-          interests and language preferences. No browsing,
-          no swiping. Just start talking.
+          Connect with someone at random based on your interests and language
+          preferences. No browsing, no swiping. Just start talking.
         </p>
 
         <button
@@ -34,6 +33,6 @@ export function FindMatch() {
           You can end the conversation whenever you want.
         </p>
       </section>
-    </main>
+    </div>
   );
 }

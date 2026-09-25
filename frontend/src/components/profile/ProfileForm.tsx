@@ -38,7 +38,7 @@ export function CompleteProfileForm(props: CompleteProfileProps) {
     }
 
     return (
-        <div className="flex min-h-full items-center justify-center bg-hog-bg px-4 py-8">
+        <div className="flex min-h-full items-center justify-center bg-hog-bg px-4 py-4">
             <form
                 onSubmit={handleSubmit}
                 className="flex w-full max-w-md flex-col gap-6 rounded-2xl border border-hog-border bg-hog-surface p-8 shadow-2xl"

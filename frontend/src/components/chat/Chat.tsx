@@ -5,15 +5,13 @@ import { ChatInput } from './ChatInput';
 
 export function Chat() {
   const user = useAuthStore((s) => s.user);
-
   const messages = useChatStore((s) => s.messages);
   const matchProfile = useChatStore((s) => s.matchProfile)!;
   const matchName = matchProfile.username;
 
   return (
-    <main className="flex flex-1 min-h-0 p-4 sm:p-6">
-      <div className="mx-auto flex w-full max-w-6xl overflow-hidden rounded-2xl border border-hog-border bg-hog-surface shadow-2xl">
-
+    <div className="flex min-h-full justify-center p-4 sm:p-6">
+      <div className="flex w-full max-w-6xl overflow-hidden rounded-2xl border border-hog-border bg-hog-surface shadow-2xl">
         {/* Profile */}
         <aside className="hidden w-72 shrink-0 border-r border-hog-border bg-hog-surface-alt p-6 md:flex md:flex-col">
           <div className="flex flex-col items-center text-center">
@@ -64,15 +62,14 @@ export function Chat() {
 
         {/* Chat */}
         <section className="flex min-w-0 flex-1 flex-col">
-
           {/* Header */}
           <header className="flex shrink-0 items-center justify-between border-b border-hog-border px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-hog-pig">
+              <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-hog-pig">
                 <img
                   src={matchProfile.imageUrl}
                   alt={matchName}
-                  className="h-full w-full rounded-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               </div>
 
@@ -97,7 +94,7 @@ export function Chat() {
           </header>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-5 py-6">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6">
             <div className="flex flex-col gap-3">
               {messages.map((message) => {
                 const isMine = message.senderId === user?._id;
@@ -130,6 +127,6 @@ export function Chat() {
           <ChatInput />
         </section>
       </div>
-    </main>
+    </div>
   );
 }

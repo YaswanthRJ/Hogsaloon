@@ -31,7 +31,7 @@ export class AuthController {
         @Body() dto: RegisterDto,
         @Res({ passthrough: true }) res: Response,
     ) {
-        const  { access_token }  = await this.authService.register(dto);
+        const { access_token } = await this.authService.register(dto);
 
         this.setAccessTokenCookie(res, access_token);
 
@@ -51,6 +51,19 @@ export class AuthController {
 
         return {
             message: 'Login successful',
+        };
+    }
+
+    @Post('logout')
+    async logout(@Res({ passthrough: true }) res: Response) {
+        res.clearCookie('access_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+        });
+
+        return {
+            message: 'Logout successful',
         };
     }
 

@@ -4,7 +4,7 @@ export interface User {
     _id: string;
     email: string;
     username: string;
-    imageUrl: string | null;
+    imageUrl: string;
     interests: string[];
     languages: string[];
     profileCompleted: boolean;
