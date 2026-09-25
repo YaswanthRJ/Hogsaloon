@@ -13,8 +13,14 @@ export class ImageService {
 
 	constructor(config: ConfigService) {
 		this.cloudinary = cloudinary;
-		this.cloudinary.config(config.getOrThrow<string>('CLOUDINARY_URL'));
+		const cloudinaryUrl = new URL(
+			config.getOrThrow<string>('CLOUDINARY_URL'),
+		);
+
 		this.cloudinary.config({
+			cloud_name: cloudinaryUrl.hostname,
+			api_key: decodeURIComponent(cloudinaryUrl.username),
+			api_secret: decodeURIComponent(cloudinaryUrl.password),
 			secure: true,
 		});
 	}

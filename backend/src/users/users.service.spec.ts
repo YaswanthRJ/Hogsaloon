@@ -6,13 +6,17 @@ import { ImageService } from '../image/image.service.js';
 
 describe('UsersService', () => {
   let service: UsersService;
+  const findByIdAndUpdate = vi.fn();
+  const uploadImageBytes = vi.fn();
 
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
-        { provide: getModelToken(User.name), useValue: {} },
-        { provide: ImageService, useValue: {} },
+        { provide: getModelToken(User.name), useValue: { findByIdAndUpdate } },
+        { provide: ImageService, useValue: { uploadImageBytes } },
       ],
     }).compile();
 
@@ -21,5 +25,31 @@ describe('UsersService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('stores the Cloudinary URL when a profile image is uploaded', async () => {
+    const updatedUser = {} as any;
+    const image = { buffer: Buffer.from('image') } as Express.Multer.File;
+
+    uploadImageBytes.mockResolvedValue({
+      publicId: 'users/user-id/profile',
+      secureUrl: 'https://res.cloudinary.com/demo/image/upload/profile.jpg',
+    });
+    findByIdAndUpdate.mockReturnValue({
+      exec: vi.fn().mockResolvedValue(updatedUser),
+    });
+
+    await service.updateProfile('user-id', { username: 'test_user' }, image);
+
+    expect(findByIdAndUpdate).toHaveBeenCalledWith(
+      'user-id',
+      {
+        $set: {
+          username: 'test_user',
+          imageUrl: 'https://res.cloudinary.com/demo/image/upload/profile.jpg',
+        },
+      },
+      { new: true, runValidators: true },
+    );
   });
 });

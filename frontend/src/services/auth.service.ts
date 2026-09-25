@@ -39,15 +39,13 @@ export async function completeProfile(
 
   formData.append('username', body.username);
 
-  formData.append(
-    'interests',
-    JSON.stringify(body.interests),
-  );
+  body.interests.forEach((interest, index) => {
+    formData.append(`interests[${index}]`, interest);
+  });
 
-  formData.append(
-    'languages',
-    JSON.stringify(body.languages),
-  );
+  body.languages.forEach((language, index) => {
+    formData.append(`languages[${index}]`, language);
+  });
 
   if (body.image) {
     formData.append('image', body.image);

@@ -25,6 +25,7 @@ export class UsersController {
     @Body() dto: UpdateProfileDto,
     @UploadedFile() image?: Express.Multer.File,
   ) {
+    console.log("got to controller", dto)
     return this.usersService.updateProfile(
       req.user.userId,
       dto,

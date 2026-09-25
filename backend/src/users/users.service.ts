@@ -40,15 +40,20 @@ export class UsersService {
         data: UpdateProfileDto,
         image?: Express.Multer.File,
     ): Promise<UserDocument> {
-        const profileData: UpdateProfileDto = { ...data };
+        let imageUrl = data.imageUrl;
 
         if (image) {
             const uploadedImage = await this.imageService.uploadImageBytes(
                 image.buffer,
                 `users/${userId}/profile`,
             );
-            profileData.imageUrl = uploadedImage.secureUrl;
+            imageUrl = uploadedImage.secureUrl;
         }
+
+        const profileData = {
+            ...data,
+            ...(imageUrl !== undefined ? { imageUrl } : {}),
+        };
 
         const user = await this.userModel
             .findByIdAndUpdate(
