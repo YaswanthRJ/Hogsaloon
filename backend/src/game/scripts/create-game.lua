@@ -24,8 +24,20 @@ if not ((playerA == chatUserA and playerB == chatUserB) or
   return { 'NOT_PLAYER' }
 end
 
-if redis.call('EXISTS', sessionGameKey) == 1 then
-  return { 'ACTIVE_GAME_EXISTS' }
+local activeGameId = redis.call('GET', sessionGameKey)
+if activeGameId then
+  local activeGameKey = 'Game:' .. activeGameId
+  local activeGameStatus = redis.call('HGET', activeGameKey, 'status')
+  local activeGameInvitee = redis.call('HGET', activeGameKey, 'inviteeId')
+  local activeGameSession = redis.call('HGET', activeGameKey, 'sessionId')
+
+  if activeGameStatus == 'INVITED' and
+    not activeGameInvitee and
+    activeGameSession == sessionId then
+    redis.call('DEL', activeGameKey, sessionGameKey)
+  else
+    return { 'ACTIVE_GAME_EXISTS' }
+  end
 end
 
 if redis.call('EXISTS', gameKey) == 1 then
@@ -38,6 +50,8 @@ redis.call('HSET', gameKey,
   'gameType', gameType,
   'playerA', playerA,
   'playerB', playerB,
+  'inviterId', playerA,
+  'inviteeId', playerB,
   'status', 'INVITED',
   'createdAt', createdAt,
   'state', state)

@@ -26,7 +26,11 @@ if userId ~= playerA and userId ~= playerB then
   return { 'NOT_PLAYER' }
 end
 
-if userId ~= playerB then
+local inviteeId = redis.call('HGET', gameKey, 'inviteeId')
+
+-- Older games did not store invitation direction; allow either chat participant
+-- to clear the stuck invitation while preserving invitee-only behavior for new games.
+if inviteeId and userId ~= inviteeId then
   return { 'NOT_INVITEE' }
 end
 

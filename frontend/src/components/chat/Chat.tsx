@@ -2,6 +2,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { endChat } from '../../services/socket.service';
 import { ChatInput } from './ChatInput';
+import { GamePanel } from './GamePanel';
 
 export function Chat() {
   const user = useAuthStore((s) => s.user);
@@ -92,6 +93,8 @@ export function Chat() {
               End Chat
             </button>
           </header>
+
+          <GamePanel />
 
           {/* Messages */}
           <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6">

@@ -55,7 +55,7 @@ export class GameLifecycleService {
     const inviteeId = session.userA === userId ? session.userB : session.userA;
     const gameId = randomUUID();
     const createdAt = Date.now();
-    const state = this.createInitialState(gameType, session.userA, session.userB);
+    const state = this.createInitialState(gameType, userId, inviteeId);
     const result = await this.redisService.getClient().eval(
       this.createGameScript,
       3,
@@ -64,8 +64,8 @@ export class GameLifecycleService {
       getChatSessionKey(session.sessionId),
       gameId,
       session.sessionId,
-      session.userA,
-      session.userB,
+      userId,
+      inviteeId,
       gameType,
       String(createdAt),
       JSON.stringify(state),

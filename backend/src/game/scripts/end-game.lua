@@ -25,7 +25,11 @@ local playerB = redis.call('HGET', gameKey, 'playerB')
 local status = redis.call('HGET', gameKey, 'status')
 
 if action == 'DECLINE' then
-  if userId ~= playerB then
+  if userId ~= playerA and userId ~= playerB then
+    return { 'NOT_PLAYER' }
+  end
+  local inviteeId = redis.call('HGET', gameKey, 'inviteeId')
+  if inviteeId and userId ~= inviteeId then
     return { 'NOT_INVITEE' }
   end
   if status ~= 'INVITED' then
