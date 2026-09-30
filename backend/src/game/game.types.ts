@@ -1,10 +1,6 @@
-export type GameType = 'RPS';
+export type GameType = 'RPS' | 'HAND_CRICKET';
 
 export type GameStatus = 'INVITED' | 'PLAYING' | 'FINISHED';
-
-export type RpsChoice = 'ROCK' | 'PAPER' | 'SCISSORS';
-
-export type RpsOutcome = 'WIN' | 'LOSS' | 'DRAW';
 
 export type GameEndReason = 'DECLINED' | 'LEFT' | 'CHAT_ENDED';
 
@@ -18,11 +14,9 @@ export interface GameSession {
   createdAt: number;
 }
 
-export interface RpsGameSession extends GameSession {
-  gameType: 'RPS';
-  userAChoice: RpsChoice | null;
-  userBChoice: RpsChoice | null;
-  winnerId: string | null;
+export interface GameSnapshot extends GameSession {
+  state: Record<string, unknown>;
+  stateJson: string;
 }
 
 export interface GameInvitation {
@@ -39,20 +33,10 @@ export interface GameParticipants {
   playerB: string;
 }
 
+export interface GameStarted extends GameParticipants {
+  state: Record<string, unknown>;
+}
+
 export interface EndedGame extends GameParticipants {
   reason: GameEndReason;
 }
-
-export interface RpsPlayerResult {
-  playerId: string;
-  result: {
-    gameId: string;
-    yourChoice: RpsChoice;
-    opponentChoice: RpsChoice;
-    outcome: RpsOutcome;
-  };
-}
-
-export type ChooseGameResult =
-  | { status: 'WAITING'; gameId: string; opponentId: string }
-  | { status: 'RESULT'; results: [RpsPlayerResult, RpsPlayerResult] };

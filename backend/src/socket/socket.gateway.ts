@@ -4,10 +4,10 @@ import {
   OnGatewayConnection,
   OnGatewayDisconnect,
   SubscribeMessage,
+  WsException,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { WsException } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { SocketService } from './socket.service.js';
 import { MatchmakingService } from '../matchmaking/matchmaking.service.js';
@@ -15,7 +15,7 @@ import { ChatsessionService } from '../chatsession/chatsession.service.js';
 import { ChatService } from '../chat/chat.service.js';
 import { SocketPresenceService } from './socket-presence.service.js';
 import { UsersService } from '../users/users.service.js';
-import { GameService } from '../game/game.service.js';
+import { GameLifecycleService } from '../game/game-lifecycle.service.js';
 
 @WebSocketGateway(
   {
@@ -32,7 +32,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatService: ChatService,
     private readonly socketPresenceService: SocketPresenceService,
     private readonly usersService: UsersService,
-    private readonly gameService: GameService,
+    private readonly gameService: GameLifecycleService,
 
   ) { }
 
@@ -327,6 +327,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       {
         gameId: participants.gameId,
         gameType: participants.gameType,
+        state: participants.state,
       },
     );
   }
@@ -343,12 +344,12 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.emitGameEnded(endedGame);
   }
 
-  @SubscribeMessage('game:choose')
-  async handleGameChoose(
+  @SubscribeMessage('game:rps:choose')
+  async handleRpsChoose(
     @ConnectedSocket() socket: Socket,
     @MessageBody() data: { gameId?: unknown; choice?: unknown },
   ) {
-    const result = await this.gameService.choose(
+    const result = await this.gameService.chooseRps(
       this.requireUserId(socket),
       data?.gameId,
       data?.choice,
@@ -358,16 +359,153 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.emitToUsers(
         [result.opponentId],
         'game:opponent-chose',
-        { gameId: result.gameId },
+        { gameId: result.gameId, phase: 'RPS' },
       );
       return;
     }
 
-    for (const playerResult of result.results) {
+    for (const playerId of [result.playerA, result.playerB]) {
+      const playerA = playerId === result.playerA;
       this.emitToUsers(
-        [playerResult.playerId],
+        [playerId],
+        'game:rps:round-result',
+        {
+          gameId: result.gameId,
+          round: result.round,
+          yourChoice: playerA ? result.choiceA : result.choiceB,
+          opponentChoice: playerA ? result.choiceB : result.choiceA,
+          outcome: result.roundWinnerId === null
+            ? 'DRAW'
+            : result.roundWinnerId === playerId
+              ? 'WIN'
+              : 'LOSS',
+          yourWins: playerA ? result.winsA : result.winsB,
+          opponentWins: playerA ? result.winsB : result.winsA,
+        },
+      );
+    }
+
+    if (result.finished) {
+      this.emitToUsers(
+        [result.playerA, result.playerB],
         'game:result',
-        playerResult.result,
+        {
+          gameId: result.gameId,
+          gameType: 'RPS',
+          winnerId: result.matchWinnerId,
+          scoreA: result.winsA,
+          scoreB: result.winsB,
+          outcome: result.matchWinnerId ? 'WINNER' : 'DRAW',
+        },
+      );
+    }
+  }
+
+  @SubscribeMessage('game:hand-cricket:toss')
+  async handleHandCricketToss(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { gameId?: unknown; number?: unknown },
+  ) {
+    const result = await this.gameService.submitHandCricketToss(
+      this.requireUserId(socket),
+      data?.gameId,
+      data?.number,
+    );
+    if (result.status === 'WAITING') {
+      this.emitToUsers(
+        [result.opponentId],
+        'game:opponent-chose',
+        { gameId: result.gameId, phase: 'TOSS' },
+      );
+      return;
+    }
+    if (result.status !== 'TOSS_RESULT') {
+      throw new WsException('Unexpected hand-cricket toss result');
+    }
+    this.emitToUsers(
+      [result.playerA, result.playerB],
+      'game:hand-cricket:toss-result',
+      {
+        gameId: result.gameId,
+        callA: result.callA,
+        callB: result.callB,
+        numberA: result.numberA,
+        numberB: result.numberB,
+        winningCall: result.winningCall,
+        tossWinnerId: result.tossWinnerId,
+      },
+    );
+  }
+
+  @SubscribeMessage('game:hand-cricket:bat-or-bowl')
+  async handleHandCricketDecision(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { gameId?: unknown; decision?: unknown },
+  ) {
+    const innings = await this.gameService.chooseHandCricketBatOrBowl(
+      this.requireUserId(socket),
+      data?.gameId,
+      data?.decision,
+    );
+    this.emitToUsers(
+      [innings.battingPlayerId, innings.bowlingPlayerId],
+      'game:hand-cricket:innings-started',
+      innings,
+    );
+  }
+
+  @SubscribeMessage('game:hand-cricket:ball')
+  async handleHandCricketBall(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { gameId?: unknown; number?: unknown },
+  ) {
+    const result = await this.gameService.submitHandCricketBall(
+      this.requireUserId(socket),
+      data?.gameId,
+      data?.number,
+    );
+    if (result.status === 'WAITING') {
+      this.emitToUsers(
+        [result.opponentId],
+        'game:opponent-chose',
+        { gameId: result.gameId, phase: 'BALL' },
+      );
+      return;
+    }
+    if (result.status !== 'BALL_RESULT') {
+      throw new WsException('Unexpected hand-cricket ball result');
+    }
+
+    this.emitToUsers(
+      [result.ball.batterId, result.ball.bowlerId],
+      'game:hand-cricket:ball-result',
+      result,
+    );
+    if (result.finished) {
+      this.emitToUsers(
+        [result.ball.batterId, result.ball.bowlerId],
+        'game:result',
+        {
+          gameId: result.gameId,
+          gameType: 'HAND_CRICKET',
+          winnerId: result.winnerId,
+          scoreA: result.scoreA,
+          scoreB: result.scoreB,
+          outcome: result.winnerId ? 'WINNER' : 'DRAW',
+        },
+      );
+    } else if (result.inningsEnded) {
+      const firstScore = result.scoreA ?? result.scoreB ?? 0;
+      this.emitToUsers(
+        [result.ball.batterId, result.ball.bowlerId],
+        'game:hand-cricket:innings-started',
+        {
+          gameId: result.gameId,
+          inningsNumber: result.nextInningsNumber,
+          battingPlayerId: result.nextBattingPlayerId,
+          bowlingPlayerId: result.nextBowlingPlayerId,
+          target: result.nextInningsNumber === 2 ? firstScore + 1 : null,
+        },
       );
     }
   }

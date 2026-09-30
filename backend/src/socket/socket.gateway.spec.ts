@@ -6,14 +6,17 @@ import { ChatsessionService } from '../chatsession/chatsession.service.js';
 import { ChatService } from '../chat/chat.service.js';
 import { SocketPresenceService } from './socket-presence.service.js';
 import { UsersService } from '../users/users.service.js';
-import { GameService } from '../game/game.service.js';
+import { GameLifecycleService } from '../game/game-lifecycle.service.js';
 import type { Server, Socket } from 'socket.io';
 
 const gameServiceMock = {
   invite: vi.fn(),
   accept: vi.fn(),
   decline: vi.fn(),
-  choose: vi.fn(),
+  chooseRps: vi.fn(),
+  submitHandCricketToss: vi.fn(),
+  chooseHandCricketBatOrBowl: vi.fn(),
+  submitHandCricketBall: vi.fn(),
   leave: vi.fn(),
   endForSession: vi.fn(),
 };
@@ -65,9 +68,9 @@ describe('SocketGateway', () => {
 
       if (
         token === UsersService ||
-        token === GameService
+        token === GameLifecycleService
       ) {
-        return token === GameService ? gameServiceMock : {};
+        return token === GameLifecycleService ? gameServiceMock : {};
       }
     }).compile();
 
@@ -117,6 +120,7 @@ describe('SocketGateway', () => {
       gameType: 'RPS',
       playerA: 'player-a',
       playerB: 'player-b',
+      state: { round: 1, winsA: 0, winsB: 0 },
     });
 
     await gateway.handleGameAccept(
@@ -128,12 +132,20 @@ describe('SocketGateway', () => {
       {
         socketId: 'socket-a',
         event: 'game:started',
-        payload: { gameId: 'game-id', gameType: 'RPS' },
+        payload: {
+          gameId: 'game-id',
+          gameType: 'RPS',
+          state: { round: 1, winsA: 0, winsB: 0 },
+        },
       },
       {
         socketId: 'socket-b',
         event: 'game:started',
-        payload: { gameId: 'game-id', gameType: 'RPS' },
+        payload: {
+          gameId: 'game-id',
+          gameType: 'RPS',
+          state: { round: 1, winsA: 0, winsB: 0 },
+        },
       },
     ]);
   });
@@ -149,31 +161,22 @@ describe('SocketGateway', () => {
   });
 
   it('emits private player results after both choices are submitted', async () => {
-    gameServiceMock.choose.mockResolvedValueOnce({
-      status: 'RESULT',
-      results: [
-        {
-          playerId: 'player-a',
-          result: {
-            gameId: 'game-id',
-            yourChoice: 'ROCK',
-            opponentChoice: 'SCISSORS',
-            outcome: 'WIN',
-          },
-        },
-        {
-          playerId: 'player-b',
-          result: {
-            gameId: 'game-id',
-            yourChoice: 'SCISSORS',
-            opponentChoice: 'ROCK',
-            outcome: 'LOSS',
-          },
-        },
-      ],
+    gameServiceMock.chooseRps.mockResolvedValueOnce({
+      status: 'ROUND_RESULT',
+      gameId: 'game-id',
+      round: 1,
+      choiceA: 'ROCK',
+      choiceB: 'SCISSORS',
+      winsA: 1,
+      winsB: 0,
+      roundWinnerId: 'player-a',
+      matchWinnerId: null,
+      finished: false,
+      playerA: 'player-a',
+      playerB: 'player-b',
     });
 
-    await gateway.handleGameChoose(
+    await gateway.handleRpsChoose(
       { data: { userId: 'player-b' } } as unknown as Socket,
       { gameId: 'game-id', choice: 'SCISSORS' },
     );
@@ -181,24 +184,73 @@ describe('SocketGateway', () => {
     expect(emissions).toHaveLength(2);
     expect(emissions[0]).toMatchObject({
       socketId: 'socket-a',
-      event: 'game:result',
-      payload: { yourChoice: 'ROCK', outcome: 'WIN' },
+      event: 'game:rps:round-result',
+      payload: { yourChoice: 'ROCK', outcome: 'WIN', yourWins: 1 },
     });
     expect(emissions[1]).toMatchObject({
       socketId: 'socket-b',
-      event: 'game:result',
-      payload: { yourChoice: 'SCISSORS', outcome: 'LOSS' },
+      event: 'game:rps:round-result',
+      payload: { yourChoice: 'SCISSORS', outcome: 'LOSS', yourWins: 0 },
     });
   });
 
+  it('broadcasts the final RPS match score when a player reaches three wins', async () => {
+    gameServiceMock.chooseRps.mockResolvedValueOnce({
+      status: 'ROUND_RESULT',
+      gameId: 'game-id',
+      round: 3,
+      choiceA: 'PAPER',
+      choiceB: 'ROCK',
+      winsA: 3,
+      winsB: 0,
+      roundWinnerId: 'player-a',
+      matchWinnerId: 'player-a',
+      finished: true,
+      playerA: 'player-a',
+      playerB: 'player-b',
+    });
+
+    await gateway.handleRpsChoose(
+      { data: { userId: 'player-b' } } as unknown as Socket,
+      { gameId: 'game-id', choice: 'ROCK' },
+    );
+
+    expect(emissions.filter((emission) => emission.event === 'game:result')).toEqual([
+      {
+        socketId: 'socket-a',
+        event: 'game:result',
+        payload: {
+          gameId: 'game-id',
+          gameType: 'RPS',
+          winnerId: 'player-a',
+          scoreA: 3,
+          scoreB: 0,
+          outcome: 'WINNER',
+        },
+      },
+      {
+        socketId: 'socket-b',
+        event: 'game:result',
+        payload: {
+          gameId: 'game-id',
+          gameType: 'RPS',
+          winnerId: 'player-a',
+          scoreA: 3,
+          scoreB: 0,
+          outcome: 'WINNER',
+        },
+      },
+    ]);
+  });
+
   it('does not include the first choice in the opponent notification', async () => {
-    gameServiceMock.choose.mockResolvedValueOnce({
+    gameServiceMock.chooseRps.mockResolvedValueOnce({
       status: 'WAITING',
       gameId: 'game-id',
       opponentId: 'player-b',
     });
 
-    await gateway.handleGameChoose(
+    await gateway.handleRpsChoose(
       { data: { userId: 'player-a' } } as unknown as Socket,
       { gameId: 'game-id', choice: 'PAPER' },
     );
@@ -207,7 +259,59 @@ describe('SocketGateway', () => {
       {
         socketId: 'socket-b',
         event: 'game:opponent-chose',
-        payload: { gameId: 'game-id' },
+        payload: { gameId: 'game-id', phase: 'RPS' },
+      },
+    ]);
+  });
+
+  it('broadcasts the hidden toss result only after both hand-cricket numbers arrive', async () => {
+    gameServiceMock.submitHandCricketToss.mockResolvedValueOnce({
+      status: 'TOSS_RESULT',
+      gameId: 'game-id',
+      callA: 'ODD',
+      callB: 'EVEN',
+      numberA: 3,
+      numberB: 4,
+      winningCall: 'ODD',
+      tossWinnerId: 'player-a',
+      playerA: 'player-a',
+      playerB: 'player-b',
+    });
+
+    await gateway.handleHandCricketToss(
+      { data: { userId: 'player-b' } } as unknown as Socket,
+      { gameId: 'game-id', number: 4 },
+    );
+
+    expect(emissions).toHaveLength(2);
+    expect(emissions[0]).toMatchObject({
+      event: 'game:hand-cricket:toss-result',
+      payload: { numberA: 3, numberB: 4, tossWinnerId: 'player-a' },
+    });
+    expect(emissions[1]).toMatchObject({
+      event: 'game:hand-cricket:toss-result',
+      payload: { numberA: 3, numberB: 4, tossWinnerId: 'player-a' },
+    });
+  });
+
+  it('keeps the first hand-cricket ball number private', async () => {
+    gameServiceMock.submitHandCricketBall.mockResolvedValueOnce({
+      status: 'WAITING',
+      gameId: 'game-id',
+      opponentId: 'player-b',
+      phase: 'INNINGS',
+    });
+
+    await gateway.handleHandCricketBall(
+      { data: { userId: 'player-a' } } as unknown as Socket,
+      { gameId: 'game-id', number: 8 },
+    );
+
+    expect(emissions).toEqual([
+      {
+        socketId: 'socket-b',
+        event: 'game:opponent-chose',
+        payload: { gameId: 'game-id', phase: 'BALL' },
       },
     ]);
   });

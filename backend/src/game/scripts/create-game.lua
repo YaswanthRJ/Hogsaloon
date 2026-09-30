@@ -8,12 +8,20 @@ local playerA = ARGV[3]
 local playerB = ARGV[4]
 local gameType = ARGV[5]
 local createdAt = ARGV[6]
-local expiresAt = tonumber(ARGV[7])
-local now = tonumber(ARGV[8])
+local state = ARGV[7]
+local expiresAt = tonumber(ARGV[8])
+local now = tonumber(ARGV[9])
 
 if redis.call('HGET', chatSessionKey, 'status') ~= 'ACTIVE' or
   tonumber(redis.call('HGET', chatSessionKey, 'expiresAt') or '0') <= now then
   return { 'CHAT_INACTIVE' }
+end
+
+local chatUserA = redis.call('HGET', chatSessionKey, 'userA')
+local chatUserB = redis.call('HGET', chatSessionKey, 'userB')
+if not ((playerA == chatUserA and playerB == chatUserB) or
+  (playerA == chatUserB and playerB == chatUserA)) then
+  return { 'NOT_PLAYER' }
 end
 
 if redis.call('EXISTS', sessionGameKey) == 1 then
@@ -32,9 +40,7 @@ redis.call('HSET', gameKey,
   'playerB', playerB,
   'status', 'INVITED',
   'createdAt', createdAt,
-  'userAChoice', '',
-  'userBChoice', '',
-  'winnerId', '')
+  'state', state)
 redis.call('PEXPIREAT', gameKey, expiresAt)
 redis.call('SET', sessionGameKey, gameId, 'PXAT', expiresAt)
 
