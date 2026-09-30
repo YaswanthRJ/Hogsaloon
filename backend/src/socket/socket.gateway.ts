@@ -7,6 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { WsException } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { SocketService } from './socket.service.js';
 import { MatchmakingService } from '../matchmaking/matchmaking.service.js';
@@ -14,6 +15,7 @@ import { ChatsessionService } from '../chatsession/chatsession.service.js';
 import { ChatService } from '../chat/chat.service.js';
 import { SocketPresenceService } from './socket-presence.service.js';
 import { UsersService } from '../users/users.service.js';
+import { GameService } from '../game/game.service.js';
 
 @WebSocketGateway(
   {
@@ -30,6 +32,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly chatService: ChatService,
     private readonly socketPresenceService: SocketPresenceService,
     private readonly usersService: UsersService,
+    private readonly gameService: GameService,
 
   ) { }
 
@@ -259,38 +262,162 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         ? session.userB
         : session.userA;
 
+    const endedGame = await this.gameService.endForSession(
+      session.sessionId,
+    );
+
+    if (endedGame) {
+      this.emitToUsers(
+        [endedGame.playerA, endedGame.playerB],
+        'game:ended',
+        {
+          gameId: endedGame.gameId,
+          reason: endedGame.reason,
+        },
+      );
+    }
+
     await this.chatService.endSession(
       session.sessionId,
       userId,
       'USER_ENDED',
     );
 
-    const userSockets =
-      this.socketPresenceService.getSockets(
-        userId,
-      );
+    this.emitToUsers(
+      [userId, otherUserId],
+      'chat:ended',
+      { reason: 'USER_ENDED' },
+    );
+  }
 
-    const otherUserSockets =
-      this.socketPresenceService.getSockets(
-        otherUserId,
-      );
+  @SubscribeMessage('game:invite')
+  async handleGameInvite(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { gameType?: unknown },
+  ) {
+    const invitation = await this.gameService.invite(
+      this.requireUserId(socket),
+      data?.gameType,
+    );
 
-    for (const socketId of userSockets) {
-      this.server.to(socketId).emit(
-        'chat:ended',
-        {
-          reason: 'USER_ENDED',
-        },
+    this.emitToUsers(
+      [invitation.inviteeId],
+      'game:invited',
+      {
+        gameId: invitation.gameId,
+        gameType: invitation.gameType,
+        inviterId: invitation.inviterId,
+      },
+    );
+  }
+
+  @SubscribeMessage('game:accept')
+  async handleGameAccept(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { gameId?: unknown },
+  ) {
+    const participants = await this.gameService.accept(
+      this.requireUserId(socket),
+      data?.gameId,
+    );
+
+    this.emitToUsers(
+      [participants.playerA, participants.playerB],
+      'game:started',
+      {
+        gameId: participants.gameId,
+        gameType: participants.gameType,
+      },
+    );
+  }
+
+  @SubscribeMessage('game:decline')
+  async handleGameDecline(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { gameId?: unknown },
+  ) {
+    const endedGame = await this.gameService.decline(
+      this.requireUserId(socket),
+      data?.gameId,
+    );
+    this.emitGameEnded(endedGame);
+  }
+
+  @SubscribeMessage('game:choose')
+  async handleGameChoose(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { gameId?: unknown; choice?: unknown },
+  ) {
+    const result = await this.gameService.choose(
+      this.requireUserId(socket),
+      data?.gameId,
+      data?.choice,
+    );
+
+    if (result.status === 'WAITING') {
+      this.emitToUsers(
+        [result.opponentId],
+        'game:opponent-chose',
+        { gameId: result.gameId },
       );
+      return;
     }
 
-    for (const socketId of otherUserSockets) {
-      this.server.to(socketId).emit(
-        'chat:ended',
-        {
-          reason: 'USER_ENDED',
-        },
+    for (const playerResult of result.results) {
+      this.emitToUsers(
+        [playerResult.playerId],
+        'game:result',
+        playerResult.result,
       );
+    }
+  }
+
+  @SubscribeMessage('game:leave')
+  async handleGameLeave(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() data: { gameId?: unknown },
+  ) {
+    const endedGame = await this.gameService.leave(
+      this.requireUserId(socket),
+      data?.gameId,
+    );
+    this.emitGameEnded(endedGame);
+  }
+
+  private emitGameEnded(game: {
+    gameId: string;
+    playerA: string;
+    playerB: string;
+    reason: string;
+  }): void {
+    this.emitToUsers(
+      [game.playerA, game.playerB],
+      'game:ended',
+      { gameId: game.gameId, reason: game.reason },
+    );
+  }
+
+  private requireUserId(socket: Socket): string {
+    const userId = socket.data.userId;
+    if (typeof userId !== 'string' || !userId) {
+      throw new WsException('Unauthenticated');
+    }
+    return userId;
+  }
+
+  private emitToUsers(
+    userIds: string[],
+    event: string,
+    payload: unknown,
+  ): void {
+    const socketIds = new Set(
+      userIds.flatMap((userId) =>
+        this.socketPresenceService.getSockets(userId),
+      ),
+    );
+
+    for (const socketId of socketIds) {
+      this.server.to(socketId).emit(event, payload);
     }
   }
 }

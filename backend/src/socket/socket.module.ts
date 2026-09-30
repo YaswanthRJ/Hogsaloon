@@ -7,9 +7,10 @@ import { ChatsessionModule } from '../chatsession/chatsession.module.js';
 import { SocketPresenceService } from './socket-presence.service.js';
 import { ChatModule } from '../chat/chat.module.js';
 import { UsersModule } from '../users/users.module.js';
+import { GameModule } from '../game/game.module.js';
 
 @Module({
-  imports: [AuthModule, MatchmakingModule, ChatsessionModule, ChatModule, UsersModule],
+  imports: [AuthModule, MatchmakingModule, ChatsessionModule, ChatModule, UsersModule, GameModule],
   providers: [SocketGateway, SocketService, SocketPresenceService],
 })
 export class SocketModule {}
