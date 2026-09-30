@@ -2,7 +2,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useChatStore } from '../../store/chatStore';
 import { endChat } from '../../services/socket.service';
 import { ChatInput } from './ChatInput';
-import { GamePanel } from './GamePanel';
+import { GamePanel } from '../game/GamePanel';
 
 export function Chat() {
   const user = useAuthStore((s) => s.user);

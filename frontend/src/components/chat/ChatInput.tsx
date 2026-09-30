@@ -1,83 +1,105 @@
 import { useState } from 'react';
-import { inviteToGame, sendMessage } from '../../services/socket.service';
+import { Gamepad2, MessageSquare } from 'lucide-react';
+import {
+  inviteToGame,
+} from '../../services/socket.service';
+import { GamePicker } from '../game/GamePicker';
+import { ChatTextInput } from './ChatTextInput';
+
+type ChatInputMode = 'MESSAGE' | 'GAME_PICKER';
+type GameType = 'RPS' | 'HAND_CRICKET';
 
 export function ChatInput() {
-  const [text, setText] = useState('');
-  const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
+  const [mode, setMode] =
+    useState<ChatInputMode>('MESSAGE');
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const [selectedGame, setSelectedGame] =
+    useState<GameType | null>(null);
 
-    const trimmed = text.trim();
+  function toggleMode() {
+    setMode((current) =>
+      current === 'MESSAGE'
+        ? 'GAME_PICKER'
+        : 'MESSAGE',
+    );
 
-    if (!trimmed) return;
+    setSelectedGame(null);
+  }
 
-    sendMessage(trimmed);
-    setText('');
+  function handleGameSelect(gameType: GameType) {
+    setSelectedGame(gameType);
+  }
+
+  function handleSubmit() {
+    if (mode !== 'GAME_PICKER' || !selectedGame) {
+      return;
+    }
+
+    inviteToGame(selectedGame);
+
+    setSelectedGame(null);
+    setMode('MESSAGE');
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex shrink-0 gap-3 border-t border-hog-border p-4"
-    >
-      <input
-        type="text"
-        value={text}
-        maxLength={1000}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Write a message..."
-        className="min-w-0 flex-1 rounded-xl border border-hog-border bg-hog-surface-alt px-4 py-3 text-sm text-hog-text outline-none placeholder:text-hog-text-muted focus:border-hog-primary"
-      />
+    <div className="shrink-0 border-t border-hog-border p-4">
+      <div className="flex min-w-0 gap-3">
+        <div className="min-w-0 flex-1">
+          {mode === 'MESSAGE' ? (
+            <ChatTextInput />
+          ) : (
+            <GamePicker
+              selectedGame={selectedGame}
+              onSelect={handleGameSelect}
+            />
+          )}
+        </div>
 
-      <div className="relative">
         <button
           type="button"
-          aria-label="Choose a game"
-          aria-haspopup="menu"
-          aria-expanded={isGameMenuOpen}
-          onClick={() => setIsGameMenuOpen((open) => !open)}
-          className="h-full rounded-xl border border-hog-border px-4 text-xl text-hog-text transition hover:bg-hog-surface-alt"
+          aria-label={
+            mode === 'MESSAGE'
+              ? 'Choose a game'
+              : 'Switch to message mode'
+          }
+          onClick={toggleMode}
+          className="
+            shrink-0 rounded-xl
+            border border-hog-border
+            px-4
+            text-hog-text
+            transition
+            hover:bg-hog-surface-alt
+          "
         >
-          +
+          {mode === 'MESSAGE' ? (
+            <Gamepad2 className="h-5 w-5" />
+          ) : (
+            <MessageSquare className="h-5 w-5" />
+          )}
         </button>
-        {isGameMenuOpen && (
-          <div
-            role="menu"
-            className="absolute bottom-full right-0 z-20 mb-2 min-w-44 overflow-hidden rounded-xl border border-hog-border bg-hog-surface p-1 shadow-xl"
-          >
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                inviteToGame('RPS');
-                setIsGameMenuOpen(false);
-              }}
-              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-hog-text hover:bg-hog-surface-alt"
-            >
-              Rock Paper Scissors
-            </button>
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                inviteToGame('HAND_CRICKET');
-                setIsGameMenuOpen(false);
-              }}
-              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-hog-text hover:bg-hog-surface-alt"
-            >
-              Hand Cricket
-            </button>
-          </div>
-        )}
-      </div>
 
-      <button
-        type="submit"
-        className="rounded-xl bg-hog-primary px-5 py-3 text-sm font-semibold text-hog-bg transition hover:bg-hog-primary-hover"
-      >
-        Send
-      </button>
-    </form>
+        <button
+          type="button"
+          disabled={
+            mode === 'GAME_PICKER' && !selectedGame
+          }
+          onClick={handleSubmit}
+          className="
+            shrink-0 rounded-xl
+            bg-hog-primary
+            px-5 py-3
+            text-sm font-semibold
+            text-hog-bg
+            transition
+            hover:bg-hog-primary-hover
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+          "
+        >
+          Send
+        </button>
+      </div>
+    </div>
   );
 }
