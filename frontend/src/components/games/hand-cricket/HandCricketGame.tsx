@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from 'react';
-import { useAuthStore } from '../../store/authStore';
-import type { ActiveGame } from '../../store/gameStore';
+import { useAuthStore } from '../../../store/authStore';
+import type { ActiveGame } from '../../../store/gameStore';
 import {
   chooseHandCricketBatOrBowl,
   submitHandCricketBall,
   submitHandCricketToss,
-} from '../../services/socket.service';
+} from '../../../services/socket.service';
 
 interface HandCricketGameProps {
   activeGame: ActiveGame;

@@ -1,5 +1,5 @@
-import { chooseRps } from '../../services/socket.service';
-import type { ActiveGame } from '../../store/gameStore';
+import { chooseRps } from '../../../services/socket.service';
+import type { ActiveGame } from '../../../store/gameStore';
 
 interface RpsGameProps {
   activeGame: ActiveGame;

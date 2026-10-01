@@ -3,7 +3,7 @@ import { Gamepad2, MessageSquare } from 'lucide-react';
 import {
   inviteToGame,
 } from '../../services/socket.service';
-import { GamePicker } from '../game/GamePicker';
+import { GamePicker } from './GamePicker';
 import { ChatTextInput } from './ChatTextInput';
 
 type ChatInputMode = 'MESSAGE' | 'GAME_PICKER';
